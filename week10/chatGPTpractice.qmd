@@ -1,0 +1,50 @@
+---
+title: "ai practice"
+format: html
+---
+
+load data
+
+```{r}
+library(tidyverse)
+
+biotech_df <- read_csv(here::here("week10", "data", "ChatGPT_Practice_Dataset.csv")) 
+
+biotech_df <- separate(biotech_df, "UniqueLabel,Name,Position,State,Salary,Years_Worked,Performance_Last_Year,Performance_2_Years_Ago", into = c("UniqueLabel", "Name", "Position", "State", "Salary", "Years_Worked", "Performance_Last_Year", "Performance_2_Years_Ago"), sep = ",") 
+
+biotech_df <- biotech_df %>% 
+  mutate(Performance_Last_Year = as.numeric(Performance_Last_Year),
+         Performance_2_Years_Ago = as.numeric(Performance_2_Years_Ago),
+         Salary = as.numeric(Salary))
+
+biotech_df$Average_Performance <- rowMeans(biotech_df[, c("Performance_Last_Year", "Performance_2_Years_Ago")], na.rm = TRUE)
+
+#result <- biotech_df %>%
+#  group_by(Position) %>%
+#  mutate(Rank_Performance = rank(Average_Performance),
+#         Rank_Salary = desc(Salary)) %>%
+#  filter(Rank_Performance == 1 | Rank_Salary == 1) 
+
+labels_to_remove <- c("Employee_38", "Employee_4", "Employee_22")
+# Remove rows with specified labels
+biotech_df_byebye <- biotech_df[!biotech_df$Name %in% labels_to_remove, ]
+# Show the resulting data frame
+View(biotech_df_byebye)
+```
+
+```{r}
+ggplot(biotech_df_byebye, aes(x = Position, y = Salary, fill = Position)) +
+  geom_boxplot() +
+  labs(title = "Salary Distribution by Position",
+       x = "Position",
+       y = "Salary") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.position = "none")
+
+# Perform ANOVA test
+anova_result <- aov(Salary ~ Position, data = biotech_df_byebye)
+# Summarize ANOVA results
+summary(anova_result)
+```
+
